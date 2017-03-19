@@ -9,3 +9,4 @@ pyparsing==2.2.0
 six==1.10.0
 -e git+https://github.com/nayak16/UrbanSense-Server.git@da61a00f46d27d3880daf97b3b0a167ac0a92b41#egg=urbansense
 Werkzeug==0.12.1
+influxdb
