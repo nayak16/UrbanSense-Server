@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 
 def validate_json(json_blob):
-	required_keys = ['value', 'lng', 'lat', 'proc_id', 'sensor_name', 'timestamp']
+	required_keys = ['value', 'lng', 'lat', 'proc_id', 'sensor_id', 'tag_id', 'timestamp']
 
 	for key in required_keys:
 		if key not in json_blob:

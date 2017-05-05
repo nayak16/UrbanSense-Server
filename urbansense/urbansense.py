@@ -1,8 +1,12 @@
 import os
 
+from influxdb import InfluxDBClient
+
 from flask import Flask, request, jsonify
+
 from .exceptions import InvalidUsage
 from .helpers import validate_json, success
+import sensor_lut as lut
 
 app = Flask(__name__)
 
@@ -14,7 +18,8 @@ app.config.update(dict(
     USERNAME='admin',
     PASSWORD='default',
     INFLUX_HOST='localhost',
-    INFLUX_PORT=8086
+    INFLUX_PORT=8086,
+    INFLUX_DB='urbansense-data'
 ))
 
 
@@ -42,14 +47,14 @@ def initdb_command():
 
 @app.cli.command('init_influx')
 def init_influx_command():
-	client = InfluxDBClient(app.config['INFLUX_HOST'], app.config['INFLUX_PORT'], database='alpha')
+	client = get_influx_client()
 	client.drop_database('alpha')
 	client.create_database('alpha')
 	print 'Initialized InfluxDB...'
 
 
 def get_influx_client():
-	return InfluxDBClient(app.config['INFLUX_HOST'], app.config['INFLUX_PORT'], database='alpha')	
+	return InfluxDBClient(app.config['INFLUX_HOST'], app.config['INFLUX_PORT'], database=app.config['INFLUX_DB'])	
 
 def get_db():
     """Opens a new database connection if there is none yet for the
@@ -75,7 +80,7 @@ def hello_world():
 def write_data():
 
 	body = request.get_json()
-	print body
+
 	if 'data_points' not in body:
 		raise InvalidUsage('body must contain data_points key', status_code=400)
 
@@ -83,15 +88,26 @@ def write_data():
 	for d in body['data_points']:
 		try:
 			validate_json(d)
+			sensor_name, tag_name = lut.get_names(d['sensor_id'], d['tag_id'])
 		except ValueError as e:
 			raise InvalidUsage(e.message, status_code=400)
+		except KeyError as e:
+			raise InvalidUsage(
+				"Sensor {} or Tag {} do not exist".format(d['sensor_id'], d['tag_id'])
+				, status_code=400
+			)
+
+		if "inf" in str(d['value']):
+			continue
 
 		data_points.append({
-				'measurement': d['sensor_name'],
+				'measurement': sensor_name,
 				'tags': {
-					'proc_id': d['proc_id']
+					'sensor_id': d['sensor_id'],
+					'proc_id': d['proc_id'],
+					'tag_name': tag_name
 				},
-				'time': d['timestamp'],
+				'time': int(d['timestamp']),
 				'fields': {
 					'value': d['value'],
 					'lat': d['lat'],
@@ -101,7 +117,7 @@ def write_data():
 		)
 
 	client = get_influx_client()
-	client.write_points(data_points)
+	client.write_points(data_points, time_precision=s)
 
 	return success("Successfully wrote to InfluxDB")
 
