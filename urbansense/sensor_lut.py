@@ -3,7 +3,9 @@ from flask import Flask, request, jsonify
 
 SENSOR_MAPPINGS = {
 	0: "ir",
-	1: "accel"
+	1: "accel",
+	2: "sound"
+
 }
 
 TAG_MAPPINGS = {
@@ -15,7 +17,13 @@ TAG_MAPPINGS = {
 	"ir": {
 		0: "0",
 		1: "1",
-		2: "2"
+		2: "2",	
+		3: "3",
+		4: "4",
+		5: "5"
+	},
+	"sound": {
+		0: "0"
 	}
 }
 

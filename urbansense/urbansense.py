@@ -19,7 +19,7 @@ app.config.update(dict(
     PASSWORD='default',
     INFLUX_HOST='localhost',
     INFLUX_PORT=8086,
-    INFLUX_DB='urbansense-data'
+    INFLUX_DB='beta'
 ))
 
 
@@ -74,6 +74,7 @@ def handle_invalid_usage(error):
 
 @app.route('/', methods=['GET', 'POST'])
 def hello_world():
+	print "asdfs"
 	return 'UrbanSense server ready to receive data...\n'
 
 @app.route('/write', methods=['POST'])
@@ -90,8 +91,10 @@ def write_data():
 			validate_json(d)
 			sensor_name, tag_name = lut.get_names(d['sensor_id'], d['tag_id'])
 		except ValueError as e:
+			print d
 			raise InvalidUsage(e.message, status_code=400)
 		except KeyError as e:
+			print d
 			raise InvalidUsage(
 				"Sensor {} or Tag {} do not exist".format(d['sensor_id'], d['tag_id'])
 				, status_code=400
@@ -117,7 +120,7 @@ def write_data():
 		)
 
 	client = get_influx_client()
-	client.write_points(data_points, time_precision=s)
+	client.write_points(data_points)
 
 	return success("Successfully wrote to InfluxDB")
 

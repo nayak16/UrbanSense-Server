@@ -5,6 +5,7 @@ def validate_json(json_blob):
 
 	for key in required_keys:
 		if key not in json_blob:
+			print key
 			raise ValueError("json missing key: {}".format(key))
 
 def success(msg):
